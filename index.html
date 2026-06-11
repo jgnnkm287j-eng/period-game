@@ -88,15 +88,17 @@ canvas{
 
         <div id="result"></div>
     </div>
+    
+<div id="pongSection" class="card">
+    <h2>❤️ Catch the Hearts ❤️</h2>
+    <p>Catch 10 hearts in 20 seconds!</p>
 
-    <div id="pongSection" class="card">
-        <h2>🏓 Princess Pong Challenge 🏓</h2>
-        <p>Reach 5 points to win!</p>
+    <canvas id="game" width="350" height="500"></canvas>
 
-        <canvas id="game" width="600" height="400"></canvas>
-
-        <div id="pongResult"></div>
-    </div>
+    <div id="scoreDisplay">Hearts: 0 ❤️</div>
+    <div id="pongResult"></div>
+</div>
+   
 
 </div>
 
@@ -134,123 +136,122 @@ function calculate(){
 
     document.getElementById("pongSection").style.display="block";
 }
-
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-let paddleY = 150;
-let aiY = 150;
+let basketX = 140;
+let score = 0;
+let timeLeft = 20;
 
-let playerScore = 0;
-let aiScore = 0;
+const basketWidth = 80;
+const basketHeight = 20;
 
-let ballX = 300;
-let ballY = 200;
+let hearts = [];
 
-let ballDX = 4;
-let ballDY = 3;
+function spawnHeart() {
+    hearts.push({
+        x: Math.random() * (canvas.width - 30),
+        y: -30,
+        speed: 2 + Math.random() * 3
+    });
+}
 
-canvas.addEventListener("mousemove",(e)=>{
+canvas.addEventListener("touchmove", (e) => {
     const rect = canvas.getBoundingClientRect();
-    paddleY = e.clientY - rect.top - 40;
+    basketX = e.touches[0].clientX - rect.left - basketWidth / 2;
 });
 
-function drawRect(x,y,w,h){
-    ctx.fillRect(x,y,w,h);
+canvas.addEventListener("mousemove", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    basketX = e.clientX - rect.left - basketWidth / 2;
+});
+
+function drawBasket() {
+    ctx.font = "50px Arial";
+    ctx.fillText(
+        "🧺",
+        basketX,
+        canvas.height - 15
+    );
 }
 
-function drawBall(){
-    ctx.beginPath();
-    ctx.arc(ballX,ballY,10,0,Math.PI*2);
-    ctx.fill();
+function drawHeart(x, y) {
+    ctx.font = "28px Arial";
+    ctx.fillText("❤️", x, y);
 }
 
-function gameLoop(){
+function gameLoop() {
 
-    ctx.clearRect(0,0,600,400);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    drawRect(10,paddleY,10,80);
+    drawBasket();
 
-    aiY += (ballY - (aiY+40))*0.08;
-    drawRect(580,aiY,10,80);
+    for (let i = hearts.length - 1; i >= 0; i--) {
 
-    drawBall();
+        let h = hearts[i];
 
-    ballX += ballDX;
-    ballY += ballDY;
+        h.y += h.speed;
 
-    if(ballY < 10 || ballY > 390)
-        ballDY *= -1;
+        drawHeart(h.x, h.y);
 
-    if(
-        ballX < 25 &&
-        ballY > paddleY &&
-        ballY < paddleY+80
-    ){
-        ballDX *= -1;
-    }
+        if (
+            h.y > canvas.height - 50 &&
+           h.x > basketX &&
+h.x < basketX + 50
+        ) {
+            score++;
+            document.getElementById("scoreDisplay").innerHTML =
+                `Hearts: ${score} ❤️`;
 
-    if(
-        ballX > 575 &&
-        ballY > aiY &&
-        ballY < aiY+80
-    ){
-        ballDX *= -1;
-    }
+            hearts.splice(i, 1);
+            continue;
+        }
 
-    if(ballX < 0){
-        aiScore++;
-        resetBall();
-    }
-
-    if(ballX > 600){
-        playerScore++;
-        resetBall();
-    }
-
-    ctx.font="20px Arial";
-    ctx.fillText(playerScore,250,30);
-    ctx.fillText(aiScore,350,30);
-
-    if(playerScore >= 5){
-        endGame(true);
-        return;
-    }
-
-    if(aiScore >= 5){
-        endGame(false);
-        return;
+        if (h.y > canvas.height + 20) {
+            hearts.splice(i, 1);
+        }
     }
 
     requestAnimationFrame(gameLoop);
 }
 
-function resetBall(){
-    ballX = 300;
-    ballY = 200;
-    ballDX *= -1;
-}
+setInterval(spawnHeart, 700);
 
-function endGame(win){
+const timer = setInterval(() => {
 
-    let result = document.getElementById("pongResult");
+    timeLeft--;
 
-    if(win){
-        result.innerHTML = `
-        <h2>👑 Victory!</h2>
-        <p>You earn 100 Princess Points.</p>
-        <p>🏆 Princess of Pong Unlocked</p>
-        `;
-    } else {
-        result.innerHTML = `
-        <h2>🧸 Consolation Reward Unlocked</h2>
-        <p>Your boyfriend owes you a snack.</p>
-        <p>🍫 Snack Voucher Activated</p>
-        `;
+    if (timeLeft <= 0) {
+
+        clearInterval(timer);
+
+        hearts = [];
+
+        const result =
+            document.getElementById("pongResult");
+
+        if (score >= 10) {
+
+            result.innerHTML = `
+                <h2>👑 Victory!</h2>
+                <p>You earned 100 Princess Points.</p>
+                <p>🌸 Heart Catching Queen 🌸</p>
+            `;
+
+        } else {
+
+            result.innerHTML = `
+                <h2>🍫 Reward Unlocked</h2>
+                <p>Your boyfriend owes you a snack.</p>
+                <p>💕 Better luck next time!</p>
+            `;
+        }
     }
-}
+
+}, 1000);
 
 gameLoop();
+
 </script>
 
 </body>
