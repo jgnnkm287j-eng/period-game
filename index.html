@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Princess Period Check-In</title>
+<style>
+body{
+    font-family: Arial, sans-serif;
+    text-align:center;
+    background:#ffe6f2;
+    color:#444;
+}
+
+.container{
+    max-width:700px;
+    margin:auto;
+    padding:20px;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    margin:15px 0;
+    border-radius:20px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+input[type=range]{
+    width:80%;
+}
+
+button{
+    background:#ff80bf;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:16px;
+}
+
+button:hover{
+    opacity:0.9;
+}
+
+#pongSection{
+    display:none;
+}
+
+canvas{
+    background:white;
+    border:3px solid #ff80bf;
+    border-radius:15px;
+}
+
+#result{
+    font-size:24px;
+    margin-top:15px;
+    font-weight:bold;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>🌸 Princess Period Check-In 🌸</h1>
+
+    <div class="card">
+        <h3>🌷 Cramp Level</h3>
+        <input type="range" id="cramps" min="0" max="10" value="5">
+
+        <h3>✨ Energy Level</h3>
+        <input type="range" id="energy" min="0" max="10" value="5">
+
+        <h3>💕 Comfort Need</h3>
+        <input type="range" id="comfort" min="0" max="10" value="5">
+
+        <h3>🌙 Mood Level</h3>
+        <input type="range" id="mood" min="0" max="10" value="5">
+
+        <h3>🧸 Social Battery</h3>
+        <input type="range" id="social" min="0" max="10" value="5">
+
+        <br><br>
+
+        <button onclick="calculate()">Get Flower Status 🌸</button>
+
+        <div id="result"></div>
+    </div>
+
+    <div id="pongSection" class="card">
+        <h2>🏓 Princess Pong Challenge 🏓</h2>
+        <p>Reach 5 points to win!</p>
+
+        <canvas id="game" width="600" height="400"></canvas>
+
+        <div id="pongResult"></div>
+    </div>
+
+</div>
+
+<script>
+function calculate(){
+
+    let cramps = +document.getElementById("cramps").value;
+    let energy = +document.getElementById("energy").value;
+    let comfort = +document.getElementById("comfort").value;
+    let mood = +document.getElementById("mood").value;
+    let social = +document.getElementById("social").value;
+
+    let score =
+        (cramps * 0.4) +
+        ((10-energy) * 0.2) +
+        (comfort * 0.15) +
+        (mood * 0.15) +
+        ((10-social) * 0.1);
+
+    let text="";
+
+    if(score < 2)
+        text="🌸 Blooming Day";
+    else if(score < 4)
+        text="🌷 Soft Petal Day";
+    else if(score < 6)
+        text="🪻 Cozy Lavender Day";
+    else if(score < 8)
+        text="🥀 Recovery Rose Day";
+    else
+        text="👑 Hibernate Queen Day";
+
+    document.getElementById("result").innerHTML =
+        "<br><b>"+text+"</b>";
+
+    document.getElementById("pongSection").style.display="block";
+}
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let paddleY = 150;
+let aiY = 150;
+
+let playerScore = 0;
+let aiScore = 0;
+
+let ballX = 300;
+let ballY = 200;
+
+let ballDX = 4;
+let ballDY = 3;
+
+canvas.addEventListener("mousemove",(e)=>{
+    const rect = canvas.getBoundingClientRect();
+    paddleY = e.clientY - rect.top - 40;
+});
+
+function drawRect(x,y,w,h){
+    ctx.fillRect(x,y,w,h);
+}
+
+function drawBall(){
+    ctx.beginPath();
+    ctx.arc(ballX,ballY,10,0,Math.PI*2);
+    ctx.fill();
+}
+
+function gameLoop(){
+
+    ctx.clearRect(0,0,600,400);
+
+    drawRect(10,paddleY,10,80);
+
+    aiY += (ballY - (aiY+40))*0.08;
+    drawRect(580,aiY,10,80);
+
+    drawBall();
+
+    ballX += ballDX;
+    ballY += ballDY;
+
+    if(ballY < 10 || ballY > 390)
+        ballDY *= -1;
+
+    if(
+        ballX < 25 &&
+        ballY > paddleY &&
+        ballY < paddleY+80
+    ){
+        ballDX *= -1;
+    }
+
+    if(
+        ballX > 575 &&
+        ballY > aiY &&
+        ballY < aiY+80
+    ){
+        ballDX *= -1;
+    }
+
+    if(ballX < 0){
+        aiScore++;
+        resetBall();
+    }
+
+    if(ballX > 600){
+        playerScore++;
+        resetBall();
+    }
+
+    ctx.font="20px Arial";
+    ctx.fillText(playerScore,250,30);
+    ctx.fillText(aiScore,350,30);
+
+    if(playerScore >= 5){
+        endGame(true);
+        return;
+    }
+
+    if(aiScore >= 5){
+        endGame(false);
+        return;
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+function resetBall(){
+    ballX = 300;
+    ballY = 200;
+    ballDX *= -1;
+}
+
+function endGame(win){
+
+    let result = document.getElementById("pongResult");
+
+    if(win){
+        result.innerHTML = `
+        <h2>👑 Victory!</h2>
+        <p>You earn 100 Princess Points.</p>
+        <p>🏆 Princess of Pong Unlocked</p>
+        `;
+    } else {
+        result.innerHTML = `
+        <h2>🧸 Consolation Reward Unlocked</h2>
+        <p>Your boyfriend owes you a snack.</p>
+        <p>🍫 Snack Voucher Activated</p>
+        `;
+    }
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>
